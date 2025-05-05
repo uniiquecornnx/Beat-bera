@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* In globals.css */
+.btn {
+  @apply text-white font-bold py-2 px-4 rounded hover:opacity-90;
+}
