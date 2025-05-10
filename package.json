@@ -10,10 +10,14 @@
   },
   "dependencies": {
     "@lottiefiles/dotlottie-web": "^0.44.0",
+    "@react-three/drei": "^10.0.7",
+    "@react-three/fiber": "^9.1.2",
     "lottie-react": "^2.4.1",
-    "next": "15.3.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "next": "^15.3.1",
+    "next-transpile-modules": "^10.0.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.176.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

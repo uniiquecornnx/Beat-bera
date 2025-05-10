@@ -1,24 +1,28 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import { DotLottie } from '@lottiefiles/dotlottie-web';
+import React, { Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, useGLTF } from '@react-three/drei';
+
+const BearModel = () => {
+    const gltf = useGLTF('/models/bear.glb');  // Make sure this path is correct
+    return <primitive object={gltf.scene} scale={1.5} />;
+};
 
 const Bear = () => {
-    useEffect(() => {
-        const dotLottie = new DotLottie({
-            autoplay: true,
-            loop: true,
-            canvas: document.getElementById('dotlottie-canvas') as HTMLCanvasElement,
-            src: '/animations/bear.json',  // Ensure this path is correct
-        });
-    }, []);
-
     return (
         <div 
             className="flex justify-center items-center h-screen bg-cover bg-center"
             style={{ backgroundImage: "url('/images/bg-room.png')" }}
         >
-            <canvas id="dotlottie-canvas" width="300" height="300"></canvas>
+            <Canvas>
+                <ambientLight intensity={0.8} />
+                <directionalLight position={[10, 10, 5]} intensity={1} />
+                <Suspense fallback={null}>
+                    <BearModel />
+                </Suspense>
+                <OrbitControls enableZoom={false} />
+            </Canvas>
         </div>
     );
 };
