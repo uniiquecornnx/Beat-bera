@@ -6,7 +6,7 @@ import { OrbitControls, useGLTF } from '@react-three/drei';
 
 const BearModel = () => {
     const gltf = useGLTF('/models/bear.glb');  // Make sure this path is correct
-    return <primitive object={gltf.scene} scale={1.5} />;
+    return <primitive object={gltf.scene} scale={1} />;
 };
 
 const Bear = () => {
@@ -21,7 +21,7 @@ const Bear = () => {
                 <Suspense fallback={null}>
                     <BearModel />
                 </Suspense>
-                <OrbitControls enableZoom={false} />
+                <OrbitControls enableZoom={true} />
             </Canvas>
         </div>
     );
