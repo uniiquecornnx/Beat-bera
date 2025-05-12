@@ -12,6 +12,7 @@
     "@lottiefiles/dotlottie-web": "^0.44.0",
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
+    "framer-motion": "^12.10.5",
     "howler": "^2.2.4",
     "lottie-react": "^2.4.1",
     "next": "^15.3.1",

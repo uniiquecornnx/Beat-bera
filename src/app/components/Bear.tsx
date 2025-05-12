@@ -1,96 +1,88 @@
 "use client";
 
-import React, { Suspense, useRef, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
+import { motion } from "framer-motion";
 
-const BearModel = ({ isSpeaking }: { isSpeaking: boolean }) => {
+const BearModel = () => {
     const { scene } = useGLTF("/models/bear.glb");
-    const bearRef = useRef<THREE.Group | null>(null);
+    const bearRef = useRef();
 
-    // Only nod the head when speaking
-    useFrame(() => {
-        if (bearRef.current && isSpeaking) {
-            bearRef.current.rotation.x = Math.sin(Date.now() * 0.005) * 0.1; // Slight nodding effect
-        }
-    });
-
-    return <primitive ref={bearRef} object={scene} scale={1} />;
+    return <primitive ref={bearRef} object={scene} scale={0.5} />;
 };
 
+const BubbleButton = ({ icon, position, onClick }) => (
+    <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={`absolute rounded-full bg-gradient-to-r from-green-400 to-blue-500 p-3 shadow-lg cursor-pointer ${position}`}
+        onClick={onClick}
+    >
+        <img src={icon} alt="button" className="w-10 h-10" />
+    </motion.button>
+);
+
 const Bear = () => {
-    const [isListening, setIsListening] = useState(false);
-    const [isSpeaking, setIsSpeaking] = useState(false);
-    const recognitionRef = useRef<SpeechRecognition | null>(null as any);
+    const [listening, setListening] = useState(true);
+    const [response, setResponse] = useState("");
 
     useEffect(() => {
-        if ("webkitSpeechRecognition" in window) {
-            const SpeechRecognition = (window as any).webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
-            recognition.lang = "en-US";
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
+        if (!("webkitSpeechRecognition" in window)) return;
 
-            recognition.onresult = (event: SpeechRecognitionEvent) => {
-                const spokenText = event.results[0][0].transcript;
-                console.log("You said: ", spokenText);
-                setIsSpeaking(true);
-                playAudio(spokenText);
-            };
+        const SpeechRecognition = window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = true;
 
-            recognition.onend = () => {
-                setIsSpeaking(false);
-            };
+        recognition.onresult = async (event) => {
+            const spokenText = event.results[0][0].transcript;
+            console.log("Heard:", spokenText);
+        };
 
-            recognitionRef.current = recognition;
-        } else {
-            console.error("Speech recognition not supported in this browser.");
-        }
-    }, []);
+        recognition.start();
 
-    const toggleListening = () => {
-        if (isListening) {
-            recognitionRef.current?.stop();
-            setIsListening(false);
-        } else {
-            recognitionRef.current?.start();
-            setIsListening(true);
-        }
-    };
-
-    const playAudio = (text: string) => {
-        const speech = new SpeechSynthesisUtterance(text);
-        speech.lang = "en-US";
-        speech.rate = 1.3;  // Faster, more playful
-        speech.pitch = 2.8  // Higher pitch for a childish effect
-        window.speechSynthesis.speak(speech);
-        speech.onend = () => setIsSpeaking(false); // Stop nodding when done speaking
-    };
+        return () => recognition.stop();
+    }, [listening]);
 
     return (
-        <div 
-            className="flex flex-col justify-center items-center h-screen bg-cover bg-center"
-            style={{ backgroundImage: "url('/images/bg-room.png')" }}
-        >
-            <Canvas>
-                <ambientLight intensity={0.8} />
-                <directionalLight position={[10, 10, 5]} intensity={1} />
-                <Suspense fallback={null}>
-                    <BearModel isSpeaking={isSpeaking} />
-                </Suspense>
-                <OrbitControls enableZoom={true} />
-            </Canvas>
-            
-            <button
-                onClick={toggleListening}
-                className={`mt-5 p-3 rounded-full text-white ${
-                    isListening ? "bg-red-500" : "bg-green-500"
-                }`}
-            >
-                {isListening ? "Stop Listening" : "Start Talking"}
-            </button>
+        <div className="flex flex-col items-center justify-center h-screen bg-[#fffce8] relative">
+            <div className="relative bg-[url('/images/bg-room.png')] bg-cover bg-center rounded-[40px] p-6 w-[800px] h-[500px] border-[16px] border-[#f7d6c3] shadow-2xl border-double">
+                <div className="absolute inset-0 bg-[url('/images/leafy-border.png')] bg-cover bg-no-repeat z-10 pointer-events-none" />
+                <Canvas>
+                    <ambientLight intensity={0.8} />
+                    <directionalLight position={[10, 10, 5]} intensity={1} />
+                    <BearModel />
+                    <OrbitControls enableZoom={false} />
+                </Canvas>
+
+                {/* Wallet Button (Top Right) */}
+                <BubbleButton icon="/images/wallet.png" position="top-4 right-4" onClick={() => alert("Connect Wallet")}/>
+
+                {/* Food Button (Lower Middle - Left Button) */}
+                <BubbleButton 
+                    icon="/images/food.png" 
+                    position="bottom-8 left-1/2 transform -translate-x-32" 
+                    onClick={() => alert("Feed the Bear")}
+                />
+
+                {/* Games Button (Lower Middle - Center Button) */}
+                <BubbleButton 
+                    icon="/images/games.png" 
+                    position="bottom-8 left-1/2 transform -translate-x-0" 
+                    onClick={() => alert("Play Games with the Bear")}
+                />
+
+                {/* Washroom Button (Lower Middle - Right Button) */}
+                <BubbleButton 
+                    icon="/images/toilet.png" 
+                    position="bottom-8 left-1/2 transform translate-x-32" 
+                    onClick={() => alert("Take the Bear to the Washroom")}
+                />
+            </div>
+            <h1 className="mt-4 text-3xl font-bold text-[#f8b88b] drop-shadow-lg"></h1>
         </div>
     );
 };
