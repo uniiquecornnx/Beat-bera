@@ -16,7 +16,7 @@ const BubbleButton = ({ icon, position, onClick }) => (
     <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className={`absolute rounded-full bg-gradient-to-r from-green-400 to-blue-500 p-3 shadow-lg cursor-pointer ${position}`}
+        className={`absolute rounded-full bg-gradient-to-r from-green-300 to-blue-200 p-3 shadow-lg cursor-pointer ${position}`}
         onClick={onClick}
     >
         <img src={icon} alt="button" className="w-10 h-10" />
