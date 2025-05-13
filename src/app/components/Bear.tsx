@@ -5,6 +5,32 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { motion } from "framer-motion";
 
+interface SpeechRecognition {
+    lang: string;
+    interimResults: boolean;
+    maxAlternatives: number;
+    continuous: boolean;
+    onresult: (event: SpeechRecognitionEvent) => void;
+    start: () => void;
+    stop: () => void;
+}
+
+declare global {
+    interface Window {
+        webkitSpeechRecognition: new () => SpeechRecognition;
+    }
+}
+
+interface SpeechRecognitionEvent {
+    results: {
+        [index: number]: {
+            [index: number]: {
+                transcript: string;
+            };
+        };
+    };
+}
+
 const BearModel = () => {
     const { scene } = useGLTF("/models/bear.glb");
     const bearRef = useRef();
@@ -24,28 +50,48 @@ const BubbleButton = ({ icon, position, onClick }) => (
 );
 
 const Bear = () => {
-    const [listening, setListening] = useState(true);
+    const [listening, setListening] = useState(false);
     const [response, setResponse] = useState("");
+    const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+
+    const toggleSpeechRecognition = () => {
+        if (!("webkitSpeechRecognition" in window)) {
+            alert("Speech recognition is not supported in your browser");
+            return;
+        }
+
+        if (!recognition) {
+            const SpeechRecognition = window.webkitSpeechRecognition;
+            const newRecognition = new SpeechRecognition();
+            newRecognition.lang = "en-US";
+            newRecognition.interimResults = false;
+            newRecognition.maxAlternatives = 1;
+            newRecognition.continuous = true;
+
+            newRecognition.onresult = (event: SpeechRecognitionEvent) => {
+                const spokenText = event.results[0][0].transcript;
+                console.log("Heard:", spokenText);
+            };
+
+            setRecognition(newRecognition);
+            newRecognition.start();
+        } else {
+            if (!listening) {
+                recognition.start();
+            } else {
+                recognition.stop();
+            }
+        }
+        setListening(!listening);
+    };
 
     useEffect(() => {
-        if (!("webkitSpeechRecognition" in window)) return;
-
-        const SpeechRecognition = window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.lang = "en-US";
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.continuous = true;
-
-        recognition.onresult = async (event) => {
-            const spokenText = event.results[0][0].transcript;
-            console.log("Heard:", spokenText);
+        return () => {
+            if (recognition) {
+                recognition.stop();
+            }
         };
-
-        recognition.start();
-
-        return () => recognition.stop();
-    }, [listening]);
+    }, [recognition]);
 
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-[#fffce8] relative">
@@ -72,7 +118,7 @@ const Bear = () => {
                 <BubbleButton 
                     icon="/images/games.png" 
                     position="bottom-8 left-1/2 transform -translate-x-0" 
-                    onClick={() => alert("Play Games with the Bear")}
+                    onClick={toggleSpeechRecognition}
                 />
 
                 {/* Washroom Button (Lower Middle - Right Button) */}
@@ -81,6 +127,13 @@ const Bear = () => {
                     position="bottom-8 left-1/2 transform translate-x-32" 
                     onClick={() => alert("Take the Bear to the Washroom")}
                 />
+
+                {/* Speech Recognition Status Indicator */}
+                {listening && (
+                    <div className="absolute top-4 left-4 bg-salt-100 text-white px-3 py-1 rounded-full text-sm">
+                        🎙️
+                    </div>
+                )}
             </div>
             <h1 className="mt-4 text-3xl font-bold text-[#f8b88b] drop-shadow-lg"></h1>
         </div>
