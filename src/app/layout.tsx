@@ -21,14 +21,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <Suspense fallback={null}>
-        <body
-          className={`${inter.variable} antialiased`}
-          suppressHydrationWarning
-        >
+      <body
+        className={`${inter.variable} antialiased`}
+        suppressHydrationWarning
+      >
+        <Suspense fallback={null}>
           <ClientLayout>{children}</ClientLayout>
-        </body>
-      </Suspense>
+        </Suspense>
+      </body>
     </html>
   );
 }
