@@ -1,5 +1,5 @@
 // src/app/components/BearWebRTC.tsx
-import React, { useRef } from "react";
+import React, { useRef, useEffect, forwardRef } from "react";
 
 interface BearWebRTCProps {
   onBearAction: (action: string) => void;
@@ -9,196 +9,182 @@ interface BearWebRTCProps {
   setIsConnecting: (val: boolean) => void;
 }
 
-const BearWebRTC: React.FC<BearWebRTCProps> = ({
+export interface BearWebRTCHandle {
+  toggleVoiceChat: () => Promise<void>;
+}
+
+const BearWebRTC = forwardRef<BearWebRTCHandle, BearWebRTCProps>(({
   onBearAction,
   listening,
   setListening,
   isConnecting,
   setIsConnecting,
-}) => {
-  // --- All refs and state from Bear.tsx ---
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const dataChannelRef = useRef<RTCDataChannel | null>(null);
+}, ref) => {
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const sessionIdRef = useRef<string | null>(null);
 
-  // --- Handlers from Bear.tsx ---
-  const handleDataChannelMessage = (event: MessageEvent) => {
+  const startRecording = async () => {
     try {
-      const serverEvent = JSON.parse(event.data);
-      switch (serverEvent.type) {
-        case 'session.created':
-          break;
-        case 'input_audio_buffer.speech_started':
-          break;
-        case 'input_audio_buffer.speech_stopped':
-          break;
-        case 'response.function_call_arguments.delta':
-          if (serverEvent.delta.name === 'bear_action') {
-            const args = JSON.parse(serverEvent.delta.arguments);
-            onBearAction(args.action);
-          }
-          break;
-        case 'error':
-          console.error('Server error:', serverEvent);
-          break;
+      // Check if MediaRecorder is supported
+      if (!window.MediaRecorder) {
+        throw new Error('MediaRecorder is not supported in this browser');
       }
-    } catch (error) {
-      console.error('Error handling data channel message:', error);
-    }
-  };
 
-  const initializeWebRTC = async () => {
-    try {
-      setIsConnecting(true);
+      // Get supported MIME types
+      const mimeType = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+        'audio/mpeg'
+      ].find(type => MediaRecorder.isTypeSupported(type));
 
-      const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-        ]
-      });
-      peerConnectionRef.current = pc;
+      if (!mimeType) {
+        throw new Error('No supported audio MIME types found');
+      }
 
-      pc.oniceconnectionstatechange = () => {
-        // console.log('ICE Connection State:', pc.iceConnectionState);
-      };
-      pc.onsignalingstatechange = () => {
-        // console.log('Signaling State:', pc.signalingState);
-      };
-      pc.onicecandidate = (event) => {
-        // console.log('ICE Candidate:', event.candidate);
-      };
+      console.log('Using MIME type:', mimeType);
 
-      const dataChannel = pc.createDataChannel('events', { ordered: true });
-      dataChannel.onopen = () => {};
-      dataChannel.onclose = () => {};
-      dataChannel.onerror = (error) => { console.error('Data channel error:', error); };
-      dataChannel.onmessage = handleDataChannelMessage;
-      dataChannelRef.current = dataChannel;
-
-      const audioEl = document.createElement('audio');
-      audioEl.autoplay = true;
-      audioElementRef.current = audioEl;
-      document.body.appendChild(audioEl);
-
-      pc.ontrack = (event) => {
-        if (audioElementRef.current) {
-          audioElementRef.current.srcObject = event.streams[0];
-        }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true
-        }
+        } 
       });
-      mediaStreamRef.current = stream;
-
-      stream.getTracks().forEach(track => {
-        if (mediaStreamRef.current) {
-          pc.addTrack(track, mediaStreamRef.current);
-        }
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: mimeType
       });
+      
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-      const offer = await pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: false
-      });
-      await pc.setLocalDescription(offer);
-
-      await new Promise((resolve) => {
-        if (pc.iceGatheringState === 'complete') {
-          resolve(undefined);
-        } else {
-          pc.onicegatheringstatechange = () => {
-            if (pc.iceGatheringState === 'complete') {
-              resolve(undefined);
-            }
-          };
-        }
-      });
-
-      const response = await fetch('/api/realtime-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offer: pc.localDescription }),
-      });
-
-      const responseData = await response.json();
-      if (!response.ok) throw new Error(responseData.error || 'Failed to initialize session');
-      const { answer, sessionId } = responseData;
-      if (!answer) throw new Error('No SDP answer received from server');
-
-      sessionIdRef.current = sessionId;
-      await pc.setRemoteDescription(new RTCSessionDescription(answer));
-
-      const sessionConfig = {
-        type: 'session.update',
-        session: {
-          instructions: `You are a cute and friendly virtual bear. 
-                        You speak in a warm, playful manner and love interacting with your friend.
-                        Keep responses brief and engaging.`,
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+          console.log('Received audio chunk:', event.data.size, 'bytes');
         }
       };
-      dataChannel.send(JSON.stringify(sessionConfig));
 
+      mediaRecorder.onstop = async () => {
+        try {
+          if (audioChunksRef.current.length === 0) {
+            throw new Error('No audio data recorded');
+          }
+
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          console.log('Audio blob size:', audioBlob.size, 'bytes');
+
+          // Convert blob to base64
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          
+          reader.onloadend = async () => {
+            try {
+              const base64Audio = reader.result as string;
+              const base64Data = base64Audio.split(',')[1]; // Remove the data URL prefix
+
+              console.log('Sending audio to API...');
+              const response = await fetch('/api/realtime-session', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  audioData: base64Data,
+                  mimeType: mimeType
+                }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                console.error('API Error:', errorData);
+                throw new Error(errorData.error || 'Failed to process audio');
+              }
+
+              const { audioResponse, textResponse } = await response.json();
+              console.log('Received response:', { textResponse });
+              
+              // Play the response audio
+              if (audioResponse) {
+                const audioBlob = new Blob([Buffer.from(audioResponse, 'base64')], { type: 'audio/mpeg' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                if (audioElementRef.current) {
+                  audioElementRef.current.src = audioUrl;
+                  await audioElementRef.current.play();
+                }
+              }
+
+              // Handle any bear actions from the response
+              if (textResponse.toLowerCase().includes('play')) {
+                onBearAction('play');
+              } else if (textResponse.toLowerCase().includes('eat') || textResponse.toLowerCase().includes('food')) {
+                onBearAction('feed');
+              }
+            } catch (error) {
+              console.error('Error processing audio:', error);
+              alert('Failed to process audio. Please try again.');
+            }
+          };
+
+          reader.onerror = (error) => {
+            console.error('Error reading audio file:', error);
+            alert('Failed to process audio. Please try again.');
+          };
+        } catch (error) {
+          console.error('Error in onstop handler:', error);
+          alert('Failed to process audio. Please try again.');
+        }
+      };
+
+      // Start recording with a 1-second timeslice
+      mediaRecorder.start(1000);
       setListening(true);
+      console.log('Recording started');
     } catch (error) {
-      console.error('Error initializing WebRTC:', error);
-      alert(error instanceof Error ? error.message : 'Failed to initialize voice chat. Please try again.');
-      stopWebRTC();
-    } finally {
-      setIsConnecting(false);
+      console.error('Error starting recording:', error);
+      alert(error instanceof Error ? error.message : 'Failed to start recording. Please check your microphone permissions.');
     }
   };
 
-  const stopWebRTC = () => {
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setListening(false);
+      console.log('Recording stopped');
     }
-    if (dataChannelRef.current) {
-      dataChannelRef.current.close();
-    }
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-    }
-    if (audioElementRef.current) {
-      audioElementRef.current.srcObject = null;
-    }
-    setListening(false);
   };
 
   // Expose toggleVoiceChat for parent to call
-  React.useImperativeHandle(
-    // @ts-ignore
-    window.bearWebRTCRef,
-    () => ({
-      toggleVoiceChat: async () => {
-        if (listening) {
-          stopWebRTC();
-        } else {
-          await initializeWebRTC();
-        }
+  React.useImperativeHandle(ref, () => ({
+    toggleVoiceChat: async () => {
+      if (listening) {
+        stopRecording();
+      } else {
+        await startRecording();
       }
-    }),
-    [listening]
-  );
+    }
+  }), [listening]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // Create audio element for playback
+    const audioElement = document.createElement('audio');
+    audioElement.autoplay = true;
+    audioElementRef.current = audioElement;
+    document.body.appendChild(audioElement);
+
     return () => {
-      stopWebRTC();
+      if (audioElementRef.current) {
+        audioElementRef.current.remove();
+      }
+      stopRecording();
     };
-    // eslint-disable-next-line
   }, []);
 
-  // UI for status only (no button, parent handles button)
   return (
     <>
       {isConnecting && (
@@ -213,6 +199,8 @@ const BearWebRTC: React.FC<BearWebRTCProps> = ({
       )}
     </>
   );
-};
+});
+
+BearWebRTC.displayName = 'BearWebRTC';
 
 export default BearWebRTC;

@@ -7,9 +7,17 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import BearModel from "./BearModel";
 import BearWallet from "./BearWallet";
-import BearWebRTC from "./BearWebRTC";
+import BearWebRTC, { BearWebRTCHandle } from './BearWebRTC';
 import GroceryShop from "./GroceryShop";
 import { motion } from "framer-motion";
+
+interface GroceryItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  nutrition: number;
+}
 
 const Bear = () => {
   // ... all your state and handlers as before ...
@@ -25,11 +33,11 @@ const Bear = () => {
   // ... other state ...
 
   // For BearWebRTC imperative handle
-  const bearWebRTCRef = useRef<any>(null);
+  const bearWebRTCRef = useRef<BearWebRTCHandle>(null);
 
   // This replaces the old toggleVoiceChat logic
   const toggleVoiceChat = async () => {
-    if (bearWebRTCRef.current && bearWebRTCRef.current.toggleVoiceChat) {
+    if (bearWebRTCRef.current) {
       await bearWebRTCRef.current.toggleVoiceChat();
     }
   };
@@ -67,7 +75,7 @@ const Bear = () => {
     if (walletStatus.balance && parseInt(walletStatus.balance, 16) / 1e18 >= item.price) {
       setWalletStatus(prev => ({
         ...prev,
-        balance: (parseInt(prev.balance, 16) - item.price * 1e18).toString(16)
+        balance: (parseInt(prev.balance || '0', 16) - item.price * 1e18).toString(16)
       }));
       handleBearAction('feed');
       alert(`Yummy! Your bear loves the ${item.name}!`);
