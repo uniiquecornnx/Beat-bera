@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { WalletStatus } from '../services/wallet';
+import { WalletStatus, WalletService } from '../services/wallet';
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
@@ -36,7 +36,14 @@ const Bear = () => {
 
   const handleWalletClick = async () => {
     if (!walletStatus.isConnected) {
-      await connectWallet();
+      try {
+        const walletService = WalletService.getInstance();
+        const newStatus = await walletService.connectWallet();
+        setWalletStatus(newStatus);
+      } catch (error) {
+        console.error('Failed to connect wallet:', error);
+        alert('Failed to connect wallet. Please try again.');
+      }
     } else {
       alert(`Balance: ${walletStatus.balance ? parseInt(walletStatus.balance, 16) / 1e18 : 0} BERA`);
     }
