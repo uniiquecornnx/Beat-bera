@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { WalletService } from '../services/wallet';
 
-interface GroceryItem {
+export interface GroceryItem {
     id: string;
     name: string;
     price: number;
@@ -19,6 +19,9 @@ interface GroceryShopProps {
     onClose: () => void;
     onPurchase: (item: GroceryItem) => void;
     walletBalance: number;
+    cart: CartItem[];
+    setCart: (cart: CartItem[]) => void;
+    onNext: () => void;
 }
 
 const SHOP_WALLET_ADDRESS = '0xCdC20B8B31f4AD4a996D1425aDF7f786BB94b0c3';
@@ -110,72 +113,32 @@ const groceryItems: GroceryItem[] = [
     }
 ];
 
-const GroceryShop: React.FC<GroceryShopProps> = ({ isOpen, onClose, onPurchase, walletBalance }) => {
-    const [cart, setCart] = useState<CartItem[]>([]);
-    const [isProcessing, setIsProcessing] = useState(false);
-
+const GroceryShop: React.FC<GroceryShopProps> = ({ isOpen, onClose, onPurchase, walletBalance, cart = [], setCart, onNext }) => {
     if (!isOpen) return null;
 
     const addToCart = (item: GroceryItem) => {
-        setCart(prevCart => {
-            const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
-            if (existingItem) {
-                return prevCart.map(cartItem =>
-                    cartItem.id === item.id
-                        ? { ...cartItem, quantity: cartItem.quantity + 1 }
-                        : cartItem
-                );
-            }
-            return [...prevCart, { ...item, quantity: 1 }];
-        });
+        const existingItem = cart.find(cartItem => cartItem.id === item.id);
+        if (existingItem) {
+            setCart(cart.map(cartItem =>
+                cartItem.id === item.id
+                    ? { ...cartItem, quantity: cartItem.quantity + 1 }
+                    : cartItem
+            ));
+        } else {
+            setCart([...cart, { ...item, quantity: 1 }]);
+        }
     };
 
     const removeFromCart = (itemId: string) => {
-        setCart(prevCart => {
-            const existingItem = prevCart.find(cartItem => cartItem.id === itemId);
-            if (existingItem && existingItem.quantity > 1) {
-                return prevCart.map(cartItem =>
-                    cartItem.id === itemId
-                        ? { ...cartItem, quantity: cartItem.quantity - 1 }
-                        : cartItem
-                );
-            }
-            return prevCart.filter(cartItem => cartItem.id !== itemId);
-        });
-    };
-
-    const getTotalPrice = () => {
-        return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    };
-
-    const handleCheckout = async () => {
-        try {
-            setIsProcessing(true);
-            const totalPrice = getTotalPrice();
-            const walletService = WalletService.getInstance();
-            
-            // Convert price to wei (1 BERA = 10^18 wei)
-            const priceInWei = BigInt(totalPrice * 10**18).toString();
-            
-            // Send transaction to the shop wallet
-            const txHash = await walletService.sendTransaction(SHOP_WALLET_ADDRESS, priceInWei);
-            console.log('Transaction hash:', txHash);
-
-            // Process each item in cart
-            cart.forEach(item => {
-                for (let i = 0; i < item.quantity; i++) {
-                    onPurchase(item);
-                }
-            });
-
-            // Clear cart after successful purchase
-            setCart([]);
-            alert('Purchase successful! Your bear will love these treats!');
-        } catch (error) {
-            console.error('Purchase failed:', error);
-            alert('Purchase failed. Please try again.');
-        } finally {
-            setIsProcessing(false);
+        const existingItem = cart.find(cartItem => cartItem.id === itemId);
+        if (existingItem && existingItem.quantity > 1) {
+            setCart(cart.map(cartItem =>
+                cartItem.id === itemId
+                    ? { ...cartItem, quantity: cartItem.quantity - 1 }
+                    : cartItem
+            ));
+        } else {
+            setCart(cart.filter(cartItem => cartItem.id !== itemId));
         }
     };
 
@@ -226,57 +189,16 @@ const GroceryShop: React.FC<GroceryShopProps> = ({ isOpen, onClose, onPurchase, 
             </div>
 
             {/* Cart Section */}
-            <div className="absolute bottom-0 left-0 right-0 bg-[#f5f5f5] p-6 rounded-t-[32px] shadow-lg">
-                <div className="max-h-[150px] overflow-y-auto">
-                    {cart.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between py-2">
-                            <div className="flex items-center gap-3">
-                                <img src={item.image} alt={item.name} className="w-10 h-10 object-contain" />
-                                <span className="text-gray-700 font-medium text-base">{item.name}</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeFromCart(item.id);
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center bg-[#ffd4d4] rounded-full text-[#ff6b6b] text-lg font-bold"
-                                >
-                                    -
-                                </motion.button>
-                                <span className="text-gray-700 font-bold text-lg min-w-[24px] text-center">{item.quantity}</span>
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        addToCart(item);
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center bg-[#c3ecd5] rounded-full text-[#2c9c3e] text-lg font-bold"
-                                >
-                                    +
-                                </motion.button>
-                                <span className="ml-4 text-[#2c9c3e] font-bold text-lg">{item.price * item.quantity} BERA</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                {cart.length > 0 && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <span className="text-[#2c9c3e] font-bold text-xl">Total: {getTotalPrice()} BERA</span>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={handleCheckout}
-                            disabled={isProcessing}
-                            className={`px-8 py-3 bg-[#c3ecd5] text-[#2c9c3e] rounded-full shadow-lg font-bold text-lg ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            {isProcessing ? 'Processing...' : 'Checkout'}
-                        </motion.button>
-                    </div>
-                )}
+            <div className="absolute bottom-0 right-0 p-6">
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={onNext}
+                    disabled={cart.length === 0}
+                    className={`px-7 py-3 bg-[#c3ecd5] text-[#2c9c3e] rounded-full shadow-lg font-bold text-lg ${cart.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                    Next
+                </motion.button>
             </div>
         </motion.div>
     );

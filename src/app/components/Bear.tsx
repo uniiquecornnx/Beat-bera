@@ -9,6 +9,7 @@ import BearModel from "./BearModel";
 import BearWallet from "./BearWallet";
 import BearWebRTC, { BearWebRTCHandle } from './BearWebRTC';
 import GroceryShop from "./GroceryShop";
+import GroceryShopPage from "./GroceryShopPage";
 import { motion } from "framer-motion";
 
 interface GroceryItem {
@@ -147,12 +148,9 @@ const Bear = () => {
         />
 
         {/* Grocery Shop Overlay */}
-        <GroceryShop
-          isOpen={isGroceryShopOpen}
-          onClose={() => setIsGroceryShopOpen(false)}
-          onPurchase={handlePurchase}
-          walletBalance={walletStatus.balance ? parseInt(walletStatus.balance, 16) / 1e18 : 0}
-        />
+        {isGroceryShopOpen && (
+          <GroceryShopPage />
+        )}
       </div>
     </div>
   );
