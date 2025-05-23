@@ -200,7 +200,7 @@ const GroceryShop: React.FC<GroceryShopProps> = ({ isOpen, onClose, onPurchase, 
                         className="w-6 h-6"
                     />
                 </motion.button>
-                <div className="bg-[#c3ecd5] px-6 py-3 rounded-full text-base font-medium shadow-lg">
+                <div className="bg-[#c3ecd5] px-6 py-3 rounded-full text-base font-bold shadow-lg text-[#2c9c3e]">
                     Balance: {walletBalance} BERA
                 </div>
             </div>
@@ -212,13 +212,13 @@ const GroceryShop: React.FC<GroceryShopProps> = ({ isOpen, onClose, onPurchase, 
                         key={item.id}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="bg-[#f5f5f5] rounded-xl p-4 flex flex-col items-center cursor-pointer shadow-lg"
+                        className="bg-white border-2 border-[#f9c9d9] rounded-lg p-2 flex flex-col items-center cursor-pointer shadow-xl"
                         onClick={() => addToCart(item)}
                     >
                         <img
                             src={item.image}
                             alt={item.name}
-                            className="w-24 h-24 object-contain mb-3"
+                            className="w-16 h-16 object-contain mb-2"
                         />
                         <p className="text-[#2c9c3e] font-bold text-xl">{item.price} BERA</p>
                     </motion.div>
