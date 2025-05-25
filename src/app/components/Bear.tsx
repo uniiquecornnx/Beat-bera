@@ -13,6 +13,7 @@ import GroceryShopPage from "./GroceryShopPage";
 import { motion } from "framer-motion";
 import HappyMeter from "./HappyMeter";
 import DiningTable from './DiningTable';
+import ShopCards from './ShopCards';
 
 interface GroceryItem {
   id: string;
@@ -48,7 +49,7 @@ const Bear = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [happy, setHappy] = useState(50); // Start at 50, or whatever you like
   const [purchasedItems, setPurchasedItems] = useState<GroceryItem[]>([]);
-  // ... other state ...
+  const [showShopCards, setShowShopCards] = useState(false);
 
   // For BearWebRTC imperative handle
   const bearWebRTCRef = useRef<BearWebRTCHandle>(null);
@@ -180,10 +181,34 @@ const Bear = () => {
           />
         )}
 
-        {/* Happy Meter */}
-        <div className="absolute left-9 top-1/10 transform -translate-y-1/2">
+        {/* Happy Meter and Shop Button Container */}
+        <div className="absolute left-4 top-1/10 transform -translate-y-1/2 flex items-center gap-4">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowShopCards(true)}
+            className="rounded-full bg-gradient-to-r from-[#a8e6cf] to-[#dcedc1] p-2.5 shadow-lg"
+          >
+            <img src="/images/shop.png" alt="Shop" className="w-8 h-8" />
+          </motion.button>
           <HappyMeter happy={happy} imageSrc="/images/happy-bear.png" />
         </div>
+
+        {/* Shop Cards Overlay */}
+        {showShopCards && (
+          <ShopCards
+            onClose={() => setShowShopCards(false)}
+            onGroceryClick={() => {
+              setShowShopCards(false);
+              setIsGroceryShopOpen(true);
+            }}
+            onBathClick={() => {
+              setShowShopCards(false);
+              // TODO: Implement bath shop functionality
+              alert('Bath & Body shop coming soon!');
+            }}
+          />
+        )}
 
         {/* Dining Table */}
         <DiningTable purchasedItems={purchasedItems} />
