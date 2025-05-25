@@ -12,6 +12,7 @@ import GroceryShop from "./GroceryShop";
 import GroceryShopPage from "./GroceryShopPage";
 import { motion } from "framer-motion";
 import HappyMeter from "./HappyMeter";
+import DiningTable from './DiningTable';
 
 interface GroceryItem {
   id: string;
@@ -46,6 +47,7 @@ const Bear = () => {
   const [isGroceryShopOpen, setIsGroceryShopOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [happy, setHappy] = useState(50); // Start at 50, or whatever you like
+  const [purchasedItems, setPurchasedItems] = useState<GroceryItem[]>([]);
   // ... other state ...
 
   // For BearWebRTC imperative handle
@@ -95,6 +97,7 @@ const Bear = () => {
       }));
       handleBearAction('feed');
       setHappy(prev => Math.min(100, prev + item.nutrition));
+      setPurchasedItems(prev => [...prev, item]);
       alert(`Yummy! Your bear loves the ${item.name}!`);
     } else {
       alert("Not enough coins!");
@@ -181,6 +184,9 @@ const Bear = () => {
         <div className="absolute left-9 top-1/10 transform -translate-y-1/2">
           <HappyMeter happy={happy} imageSrc="/images/happy-bear.png" />
         </div>
+
+        {/* Dining Table */}
+        <DiningTable purchasedItems={purchasedItems} />
       </div>
     </div>
   );
