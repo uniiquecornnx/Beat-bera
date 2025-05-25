@@ -1,28 +1,41 @@
 import React, { useState } from 'react';
 import GroceryShop from './GroceryShop';
 import CheckoutCounter from './CheckoutCounter';
+import HappyMeter from "./HappyMeter";
 
 import type { CartItem } from './CheckoutCounter';
 import type { GroceryItem } from './GroceryShop';
 
-const GroceryShopPage: React.FC = () => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+interface GroceryShopPageProps {
+  onClose: () => void;
+  onPurchase: (item: GroceryItem) => void;
+  walletBalance: number;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+}
+
+const GroceryShopPage: React.FC<GroceryShopPageProps> = ({
+  onClose,
+  onPurchase,
+  walletBalance,
+  cart,
+  setCart
+}) => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Example wallet balance and purchase handler
-  const walletBalance = 0;
-  const handlePurchase = (item: GroceryItem) => { /* ... */ };
-
   const handleCheckout = async () => {
     setIsProcessing(true);
-    // Add your checkout logic here (e.g., blockchain transaction, etc.)
-    setTimeout(() => {
-      setIsProcessing(false);
-      setCart([]);
-      setShowCheckout(false);
-      alert('Purchase successful!');
-    }, 1500);
+    // Process each item in the cart
+    for (const item of cart) {
+      for (let i = 0; i < item.quantity; i++) {
+        await onPurchase(item);
+      }
+    }
+    setIsProcessing(false);
+    setCart([]);
+    setShowCheckout(false);
+    onClose();
   };
 
   return (
@@ -30,8 +43,8 @@ const GroceryShopPage: React.FC = () => {
       {!showCheckout && (
         <GroceryShop
           isOpen={true}
-          onClose={() => {/* ... */}}
-          onPurchase={handlePurchase}
+          onClose={onClose}
+          onPurchase={onPurchase}
           walletBalance={walletBalance}
           cart={cart}
           setCart={setCart}

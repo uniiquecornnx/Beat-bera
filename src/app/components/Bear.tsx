@@ -11,6 +11,7 @@ import BearWebRTC, { BearWebRTCHandle } from './BearWebRTC';
 import GroceryShop from "./GroceryShop";
 import GroceryShopPage from "./GroceryShopPage";
 import { motion } from "framer-motion";
+import HappyMeter from "./HappyMeter";
 
 interface GroceryItem {
   id: string;
@@ -18,6 +19,18 @@ interface GroceryItem {
   price: number;
   image: string;
   nutrition: number;
+}
+
+interface CartItem extends GroceryItem {
+  quantity: number;
+}
+
+interface GroceryShopPageProps {
+  onClose: () => void;
+  onPurchase: (item: GroceryItem) => void;
+  walletBalance: number;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
 
 const Bear = () => {
@@ -31,6 +44,8 @@ const Bear = () => {
     balance: null
   });
   const [isGroceryShopOpen, setIsGroceryShopOpen] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [happy, setHappy] = useState(50); // Start at 50, or whatever you like
   // ... other state ...
 
   // For BearWebRTC imperative handle
@@ -79,6 +94,7 @@ const Bear = () => {
         balance: (parseInt(prev.balance || '0', 16) - item.price * 1e18).toString(16)
       }));
       handleBearAction('feed');
+      setHappy(prev => Math.min(100, prev + item.nutrition));
       alert(`Yummy! Your bear loves the ${item.name}!`);
     } else {
       alert("Not enough coins!");
@@ -149,8 +165,22 @@ const Bear = () => {
 
         {/* Grocery Shop Overlay */}
         {isGroceryShopOpen && (
-          <GroceryShopPage />
+          <GroceryShopPage
+            onClose={() => {
+              setIsGroceryShopOpen(false);
+              setCart([]);
+            }}
+            onPurchase={handlePurchase}
+            walletBalance={walletStatus.balance ? parseInt(walletStatus.balance, 16) / 1e18 : 0}
+            cart={cart}
+            setCart={setCart}
+          />
         )}
+
+        {/* Happy Meter */}
+        <div className="absolute left-9 top-1/10 transform -translate-y-1/2">
+          <HappyMeter happy={happy} imageSrc="/images/happy-bear.png" />
+        </div>
       </div>
     </div>
   );
