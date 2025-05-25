@@ -50,6 +50,7 @@ const Bear = () => {
   const [happy, setHappy] = useState(50); // Start at 50, or whatever you like
   const [purchasedItems, setPurchasedItems] = useState<GroceryItem[]>([]);
   const [showShopCards, setShowShopCards] = useState(false);
+  const [showDiningTable, setShowDiningTable] = useState(false);
 
   // For BearWebRTC imperative handle
   const bearWebRTCRef = useRef<BearWebRTCHandle>(null);
@@ -128,12 +129,12 @@ const Bear = () => {
         <BearWallet walletStatus={walletStatus} onWalletClick={handleWalletClick} />
 
         {/* Bottom Action Buttons */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-16 z-10">
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-16 z-20">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             className="rounded-full bg-gradient-to-r from-[#a8e6cf] to-[#dcedc1] p-3 shadow-lg"
-            onClick={() => setIsGroceryShopOpen(true)}
+            onClick={() => setShowDiningTable(!showDiningTable)}
           >
             <img src="/images/food.png" alt="Food" className="w-10 h-10" />
           </motion.button>
@@ -157,6 +158,17 @@ const Bear = () => {
           </motion.button>
         </div>
 
+        {/* Table UI Element */}
+        {showDiningTable && (
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10">
+            <img
+              src="/images/table.png"
+              alt="Dining Table"
+              className="w-65 h-65 object-contain"
+            />
+          </div>
+        )}
+
         {/* WebRTC/Voice Chat Status */}
         <BearWebRTC
           ref={bearWebRTCRef}
@@ -166,6 +178,22 @@ const Bear = () => {
           listening={listening}
           setListening={setListening}
         />
+
+        {/* Shop Cards Overlay */}
+        {showShopCards && (
+          <ShopCards
+            onClose={() => setShowShopCards(false)}
+            onGroceryClick={() => {
+              setShowShopCards(false);
+              setIsGroceryShopOpen(true);
+            }}
+            onBathClick={() => {
+              setShowShopCards(false);
+              // TODO: Implement bath shop functionality
+              alert('Bath & Body shop coming soon!');
+            }}
+          />
+        )}
 
         {/* Grocery Shop Overlay */}
         {isGroceryShopOpen && (
@@ -197,25 +225,6 @@ const Bear = () => {
         <div className="absolute left-1/2 top--4 transform -translate-x-1/2">
           <HappyMeter happy={happy} imageSrc="/images/happy-bear.png" />
         </div>
-
-        {/* Shop Cards Overlay */}
-        {showShopCards && (
-          <ShopCards
-            onClose={() => setShowShopCards(false)}
-            onGroceryClick={() => {
-              setShowShopCards(false);
-              setIsGroceryShopOpen(true);
-            }}
-            onBathClick={() => {
-              setShowShopCards(false);
-              // TODO: Implement bath shop functionality
-              alert('Bath & Body shop coming soon!');
-            }}
-          />
-        )}
-
-        {/* Dining Table */}
-        <DiningTable purchasedItems={purchasedItems} />
       </div>
     </div>
   );
