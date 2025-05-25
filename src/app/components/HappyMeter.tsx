@@ -20,8 +20,8 @@ const HappyMeter: React.FC<HappyMeterProps> = ({ happy, imageSrc }) => {
       <img
         src={imageSrc}
         alt="Happy Bear"
-        className="w-10 h-10 ml-2 object-contain drop-shadow"
-        style={{ marginLeft: '-18px' }}
+        className="w-27 h-27 ml-2 object-contain drop-shadow"
+        style={{ marginLeft: '-55px' }}
       />
     </div>
   );
