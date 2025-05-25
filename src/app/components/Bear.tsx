@@ -182,7 +182,7 @@ const Bear = () => {
         )}
 
         {/* Happy Meter and Shop Button Container */}
-        <div className="absolute left-4 top-1/10 transform -translate-y-1/2 flex items-center gap-4">
+        <div className="absolute left-4 top-4 flex items-center gap-4">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -191,6 +191,10 @@ const Bear = () => {
           >
             <img src="/images/shop.png" alt="Shop" className="w-8 h-8" />
           </motion.button>
+        </div>
+
+        {/* Happy Meter */}
+        <div className="absolute left-1/2 top--4 transform -translate-x-1/2">
           <HappyMeter happy={happy} imageSrc="/images/happy-bear.png" />
         </div>
 
