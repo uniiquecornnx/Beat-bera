@@ -21,6 +21,7 @@ interface GroceryItem {
   price: number;
   image: string;
   nutrition: number;
+  quantity?: number;
 }
 
 interface CartItem extends GroceryItem {
@@ -51,6 +52,13 @@ const Bear = () => {
   const [purchasedItems, setPurchasedItems] = useState<GroceryItem[]>([]);
   const [showShopCards, setShowShopCards] = useState(false);
   const [showDiningTable, setShowDiningTable] = useState(false);
+  const [currentFoodIndex, setCurrentFoodIndex] = useState(0);
+  const [sampleFoodItems] = useState<GroceryItem[]>([
+    { id: '1', name: 'Apple', image: '/images/apple.png', price: 10, nutrition: 10, quantity: 3 },
+    { id: '2', name: 'Banana', image: '/images/banana.png', price: 15, nutrition: 15, quantity: 2 },
+    { id: '3', name: 'Carrot', image: '/images/carrot.png', price: 8, nutrition: 8, quantity: 4 },
+    { id: '4', name: 'Orange', image: '/images/orange.png', price: 12, nutrition: 12, quantity: 1 },
+  ]);
 
   // For BearWebRTC imperative handle
   const bearWebRTCRef = useRef<BearWebRTCHandle>(null);
@@ -161,11 +169,51 @@ const Bear = () => {
         {/* Table UI Element */}
         {showDiningTable && (
           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-10">
-            <img
-              src="/images/table.png"
-              alt="Dining Table"
-              className="w-65 h-65 object-contain"
-            />
+            <div className="relative">
+              <img
+                src="/images/table.png"
+                alt="Dining Table"
+                className="w-65 h-65 object-contain"
+              />
+              
+              {/* Single Food Item with Navigation */}
+              <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="relative">
+                  <img
+                    src={sampleFoodItems[currentFoodIndex]?.image}
+                    alt={sampleFoodItems[currentFoodIndex]?.name}
+                    className="w-16 h-16 object-contain"
+                  />
+                  {/* Quantity Box */}
+                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white/90 rounded-md px-1 py-0 shadow-sm border border-[#2c9c3e]">
+                    <span className="text-[10px] font-bold text-[#2c9c3e]">
+                      x{sampleFoodItems[currentFoodIndex]?.quantity || 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Navigation Arrows */}
+                <div className="absolute top-1/2 left-0 right-0 flex justify-between px-40 transform -translate-y-1/2 z-50">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setCurrentFoodIndex((prev) => (prev === 0 ? sampleFoodItems.length - 1 : prev - 1))}
+                    className="w-10 h-10 rounded-full bg-[#c3ecd5] flex items-center justify-center shadow-lg border-2 border-[#2c9c3e]"
+                  >
+                    <img src="/images/back.png" alt="Previous" className="w-5 h-5" />
+                  </motion.button>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setCurrentFoodIndex((prev) => (prev === sampleFoodItems.length - 1 ? 0 : prev + 1))}
+                    className="w-10 h-10 rounded-full bg-[#c3ecd5] flex items-center justify-center shadow-lg border-2 border-[#2c9c3e]"
+                  >
+                    <img src="/images/next.png" alt="Next" className="w-5 h-5" />
+                  </motion.button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

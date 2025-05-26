@@ -32,9 +32,9 @@ const GroceryShopPage: React.FC<GroceryShopPageProps> = ({
         await onPurchase(item);
       }
     }
-    setIsProcessing(false);
-    setCart([]);
-    setShowCheckout(false);
+      setIsProcessing(false);
+      setCart([]);
+      setShowCheckout(false);
     onClose();
   };
 
