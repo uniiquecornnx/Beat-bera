@@ -273,6 +273,13 @@ const Bear = () => {
         <div className="absolute left-1/2 top--4 transform -translate-x-1/2">
           <HappyMeter happy={happy} imageSrc="/images/happy-bear.png" />
         </div>
+
+        {/* Beach Chair (left of bear) */}
+        <img
+          src="/images/beach-chair.png"
+          alt="Beach Chair"
+          className="absolute left-14 bottom-19.5 w-50 h-auto z-10"
+        />
       </div>
     </div>
   );
