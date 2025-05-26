@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { WalletStatus, WalletService } from '../services/wallet';
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import HappyMeter from "./HappyMeter";
 import DiningTable from './DiningTable';
 import ShopCards from './ShopCards';
+import Lottie from "react-lottie-player";
 
 interface GroceryItem {
   id: string;
@@ -59,9 +60,20 @@ const Bear = () => {
     { id: '3', name: 'Carrot', image: '/images/carrot.png', price: 8, nutrition: 8, quantity: 4 },
     { id: '4', name: 'Orange', image: '/images/orange.png', price: 12, nutrition: 12, quantity: 1 },
   ]);
+  const [ballAnimation, setBallAnimation] = useState<any>(null);
+  const [chairAnimation, setChairAnimation] = useState<any>(null);
 
   // For BearWebRTC imperative handle
   const bearWebRTCRef = useRef<BearWebRTCHandle>(null);
+
+  useEffect(() => {
+    fetch('/animations/ball.json')
+      .then(res => res.json())
+      .then(data => setBallAnimation(data));
+    fetch('/animations/your-animation.json')
+      .then(res => res.json())
+      .then(data => setChairAnimation(data));
+  }, []);
 
   // This replaces the old toggleVoiceChat logic
   const toggleVoiceChat = async () => {
@@ -280,6 +292,36 @@ const Bear = () => {
           alt="Beach Chair"
           className="absolute left-14 bottom-19.5 w-50 h-auto z-10"
         />
+        {/* Lottie Animation next to beach chair */}
+        <motion.div
+          className="absolute left-40 bottom-20 w-16 h-16 z-20 flex items-center justify-center"
+          whileHover={{ scale: 1.2, y: -10 }}
+          transition={{ type: 'spring', stiffness: 300 }}
+        >
+          {chairAnimation && (
+            <Lottie
+              loop
+              play={true}
+              animationData={chairAnimation}
+              style={{ width: '100%', height: '100%' }}
+            />
+          )}
+        </motion.div>
+        {/* Animated Ball next to beach chair */}
+        <motion.div
+          className="absolute left-80 bottom-32 w-16 h-16 z-20 flex items-center justify-center"
+          whileHover={{ scale: 1.2, y: -10 }}
+          transition={{ type: 'spring', stiffness: 300 }}
+        >
+          {ballAnimation && (
+            <Lottie
+              loop
+              play={true}
+              animationData={ballAnimation}
+              style={{ width: '100%', height: '100%' }}
+            />
+          )}
+        </motion.div>
       </div>
     </div>
   );
