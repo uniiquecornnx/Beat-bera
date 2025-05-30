@@ -130,7 +130,16 @@ const Bear = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-[#f5f5f5]">
-      <div className="relative w-[800px] h-[500px] rounded-[40px] border-[16px] border-[#ffd4d4] shadow-2xl overflow-hidden bg-white">
+      {/* Faded Background Layer */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src="/images/bg-room.png" 
+          alt="Faded Forest Background"
+          className="w-full h-full object-cover opacity-30"
+        />
+      </div>
+
+      <div className="relative w-[800px] h-[500px] rounded-[40px] border-[16px] border-[#ffd4d4] shadow-2xl overflow-hidden bg-white z-10">
         {/* Room Background */}
         <div className="absolute inset-0">
           <img 
