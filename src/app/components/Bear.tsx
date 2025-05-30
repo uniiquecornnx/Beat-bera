@@ -129,7 +129,7 @@ const Bear = () => {
   // ... rest of your handlers (handleBearAction, handleWalletClick, etc.) ...
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-[#f5f5f5]">
+    <div className="flex flex-col items-center justify-center h-screen">
       {/* Faded Background Layer */}
       <div className="absolute inset-0 z-0">
         <img 
