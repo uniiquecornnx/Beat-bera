@@ -49,7 +49,7 @@ const DiningTable: React.FC<DiningTableProps> = ({ purchasedItems, onClose }) =>
       <div className="relative w-[400px] h-[300px] bg-white/90 rounded-[40px] p-8 shadow-2xl">
         {/* Close Button */}
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 4 }}
           whileTap={{ scale: 0.9 }}
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#f9c9d9] flex items-center justify-center shadow-lg"
